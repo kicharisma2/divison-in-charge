@@ -175,81 +175,141 @@ btnClearLog.addEventListener("click", () => {
 // Initialize on load
 initDropdowns();
 
-/* CORS Proxy list for request rotation */
-const PROXY_TEMPLATES = [
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    url => `https://thingproxy.freeboard.io/fetch/${url}`
-];
-
-// Fetch helper with proxy fallback and timeout support
+// Fetch helper with proxy fallback, content validation, and timeout support
 async function fetchViaProxy(url, signal) {
     let lastError = null;
-    for (let i = 0; i < PROXY_TEMPLATES.length; i++) {
+    const proxies = [
+        { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
+        { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` }
+    ];
+    
+    for (let i = 0; i < proxies.length; i++) {
         if (signal && signal.aborted) {
             throw new DOMException("Aborted", "AbortError");
         }
-        const proxyUrl = PROXY_TEMPLATES[i](url);
+        const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
             
-            let linkedSignal = controller.signal;
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
             }
 
-            const response = await fetch(proxyUrl, { signal: linkedSignal });
+            const response = await fetch(proxyUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
-            const arrayBuffer = await response.arrayBuffer();
             
-            let decoder = new TextDecoder("utf-8");
-            let text = decoder.decode(arrayBuffer);
-            
-            const korMatches = text.match(/[가-힣]/g);
-            if (!korMatches || korMatches.length < 3) {
-                decoder = new TextDecoder("euc-kr");
+            let text = "";
+            if (proxies[i].name === "allorigins-json") {
+                const json = await response.json();
+                text = json.contents || "";
+            } else {
+                const arrayBuffer = await response.arrayBuffer();
+                let decoder = new TextDecoder("utf-8");
                 text = decoder.decode(arrayBuffer);
+                const korMatches = text.match(/[가-힣]/g);
+                if (!korMatches || korMatches.length < 3) {
+                    decoder = new TextDecoder("euc-kr");
+                    text = decoder.decode(arrayBuffer);
+                }
+            }
+            
+            // Strictly validate XML or HTML content to bypass fake/hijacked proxy landing pages
+            if (url.includes("Search.do") || url.includes("Service.do") || url.includes("type=XML") || url.includes("type=xml")) {
+                if (!text.includes("<?xml") && !text.includes("<resultCode>") && !text.includes("<OrdinSearch>") && !text.includes("<OrdinService>")) {
+                    throw new Error("Invalid XML structure returned from proxy");
+                }
+            } else {
+                // If it is the HTML viewer fallback page
+                if (!text.includes("<html") && !text.includes("<!DOCTYPE") && !text.includes("<body")) {
+                    throw new Error("Invalid HTML content returned from proxy");
+                }
             }
             return text;
         } catch (e) {
-            console.warn(`Proxy ${i+1} failed: ${url}`, e);
+            console.warn(`Proxy ${proxies[i].name} failed: ${url}`, e);
             lastError = e;
         }
     }
     throw new Error(`모든 CORS 프록시 서버 호출에 실패했습니다. (최종 에러: ${lastError?.message})`);
 }
 
-// Fetch helper for binary content
+// Fetch helper for binary content with OLE/ZIP magic bytes validation
 async function fetchViaProxyArrayBuffer(url, signal) {
     let lastError = null;
-    for (let i = 0; i < PROXY_TEMPLATES.length; i++) {
+    const proxies = [
+        { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
+        { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` }
+    ];
+    
+    for (let i = 0; i < proxies.length; i++) {
         if (signal && signal.aborted) {
             throw new DOMException("Aborted", "AbortError");
         }
-        const proxyUrl = PROXY_TEMPLATES[i](url);
+        const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
             
-            let linkedSignal = controller.signal;
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
             }
 
-            const response = await fetch(proxyUrl, { signal: linkedSignal });
+            const response = await fetch(proxyUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
-            return await response.arrayBuffer();
+            
+            let arrayBuffer;
+            if (proxies[i].name === "allorigins-json") {
+                const json = await response.json();
+                const contents = json.contents || "";
+                if (contents.startsWith("data:")) {
+                    const base64Str = contents.split(",")[1];
+                    const binaryString = atob(base64Str);
+                    const len = binaryString.length;
+                    const bytes = new Uint8Array(len);
+                    for (let j = 0; j < len; j++) {
+                        bytes[j] = binaryString.charCodeAt(j);
+                    }
+                    arrayBuffer = bytes.buffer;
+                } else {
+                    const encoder = new TextEncoder();
+                    arrayBuffer = encoder.encode(contents).buffer;
+                }
+            } else {
+                arrayBuffer = await response.arrayBuffer();
+            }
+            
+            // Validate binary content size
+            const bytes = new Uint8Array(arrayBuffer);
+            if (bytes.length < 8) {
+                throw new Error("Response binary size is too small");
+            }
+            
+            // Check for HWP OLE magic bytes or ZIP magic bytes
+            const isOle = bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0 &&
+                          bytes[4] === 0xA1 && bytes[5] === 0xB1 && bytes[6] === 0x1A && bytes[7] === 0xE1;
+            const isZip = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+            
+            if (!isOle && !isZip) {
+                // If it is text or HTML, it might be an error page
+                const textSample = new TextDecoder("utf-8").decode(bytes.slice(0, 100));
+                if (textSample.includes("<html") || textSample.includes("<!DOCTYPE") || textSample.includes("<body")) {
+                    throw new Error("Received HTML error/redirect page instead of binary file");
+                }
+            }
+            return arrayBuffer;
         } catch (e) {
-            console.warn(`Proxy ${i+1} failed: ${url}`, e);
+            console.warn(`Proxy ${proxies[i].name} failed: ${url}`, e);
             lastError = e;
         }
     }
@@ -552,18 +612,22 @@ function extractValidDeptName(text) {
     clean = clean.replace(/^[0-9가-힣a-zA-Z\s\.\-]+\.\s*/, '').trim();
     clean = clean.replace(/^[가-힣a-zA-Z0-9\-\.\s]+\)\s*/, '').trim();
     clean = clean.replace(/[^가-힣a-zA-Z\s\u2027·]/g, '').trim();
+    if (isValidDeptName(clean, sText)) {
+        return clean;
+    }
     return null;
 }
 
 // HWP 5.0 binary parser using global CFB and Pako
 function parseHwpText(arrayBuffer) {
-    if (typeof CFB === "undefined" || typeof pako === "undefined") {
+    const cfbObj = typeof CFB !== "undefined" ? CFB : (typeof XLSX !== "undefined" ? XLSX.CFB : null);
+    if (!cfbObj || typeof pako === "undefined") {
         console.warn("CFB or pako is not loaded.");
         return "";
     }
     try {
         const bytes = new Uint8Array(arrayBuffer);
-        const cfb = CFB.read(bytes, { type: "array" });
+        const cfb = cfbObj.read(bytes, { type: "array" });
         const sections = cfb.FileIndex.filter(file => file.name.includes("BodyText/Section"));
         sections.sort((a, b) => a.name.localeCompare(b.name));
         
@@ -1351,7 +1415,6 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                 
                 let dMatch;
                 while ((dMatch = re1.exec(decodedText)) !== null) directSeqs.push(dMatch[1]);
-                while ((dMatch = re2.exec(dMatch)) !== null) directSeqs.push(dMatch[1]); // Wait, re2 is global, this is correct
                 // Correcting potential regex match loops in JS:
                 // Actually let's use matchAll or simple matches to avoid infinite loop
                 const re1m = decodedText.match(/bylSeq\s*=\s*["']?(\d+)/gi);
@@ -1469,9 +1532,10 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                                               bytes[4] === 0xA1 && bytes[5] === 0xB1 && bytes[6] === 0x1A && bytes[7] === 0xE1;
                                 
                                 let isHwp = false;
-                                if (isOle && typeof CFB !== "undefined") {
+                                const cfbObj = typeof CFB !== "undefined" ? CFB : (typeof XLSX !== "undefined" ? XLSX.CFB : null);
+                                if (isOle && cfbObj) {
                                     try {
-                                        const cfb = CFB.read(bytes, { type: "array" });
+                                        const cfb = cfbObj.read(bytes, { type: "array" });
                                         isHwp = cfb.FileIndex.some(file => file.name.includes("FileHeader"));
                                     } catch (e) {}
                                 }
