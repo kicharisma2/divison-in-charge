@@ -191,7 +191,7 @@ async function fetchViaProxy(url, signal) {
         const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for slow proxy networks
             
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
@@ -255,7 +255,7 @@ async function fetchViaProxyArrayBuffer(url, signal) {
         const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for slow proxy networks
             
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
@@ -886,6 +886,14 @@ async function querySearchList(target, query, signal) {
 btnSearchOrdin.addEventListener("click", () => startTracking("ordin"));
 btnSearchJeongyeol.addEventListener("click", () => startTracking("jeongyeol"));
 btnStop.addEventListener("click", stopTracking);
+
+// Trigger search on pressing Enter inside inputKeyword
+inputKeyword.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        btnSearchOrdin.click();
+    }
+});
 
 function stopTracking() {
     if (isSearching && abortController) {

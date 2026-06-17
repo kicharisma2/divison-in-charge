@@ -354,33 +354,30 @@ body {
     flex: none;
     padding: 6px 14px;
     font-family: inherit;
-    font-size: 14.5px;
-    font-weight: 700;
+    font-size: 13.5px;
+    font-weight: 600;
     color: var(--text-primary);
     background-color: var(--bg-input);
-    border: 2px solid #2563eb; /* Prominent bright blue border */
+    border: 1px solid var(--border-color); /* Clean light border matching selects */
     border-radius: var(--radius-sm);
     outline: none;
-    height: 36px;
-    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+    height: 32px; /* Matches dropdown height exactly for clean alignment */
     transition: all var(--transition-fast);
 }
 
-body.dark-mode .form-input {
-    border-color: #38bdf8; /* Bright cyan in dark mode */
-    box-shadow: 0 1px 3px rgba(56, 189, 248, 0.2);
+.form-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.65; /* Lighter placeholder example text */
+    font-weight: normal;
 }
 
 .form-input:focus {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2), var(--shadow-md);
-    background-color: #ffffff;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(31, 73, 125, 0.12), var(--shadow-sm);
 }
 
 body.dark-mode .form-input:focus {
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25), var(--shadow-md);
-    background-color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), var(--shadow-sm);
 }
 
 .buttons-field {
@@ -975,25 +972,48 @@ body.dark-mode .report-law-badge {
     color: #ffffff !important;
 }
 
-/* Responsive Grid adaptation */
+/* Responsive adaptation for Mobile Screen */
 @media (max-width: 768px) {
     .top-control-panel {
-        padding: 12px 16px;
+        padding: 14px 16px;
+        gap: 14px;
     }
-    .selectors-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    .actions-row {
+    .selectors-row, .actions-row {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
     }
-    .keyword-field {
-        max-width: none;
+    .selector-field, .keyword-field {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        width: 100%;
+    }
+    .field-label {
+        width: auto !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        padding-right: 0 !important;
+        font-weight: 700;
+        font-size: 13px;
+    }
+    .select-wrapper, .form-select, .form-input {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
     }
     .buttons-field {
-        justify-content: flex-end;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        margin-top: 4px;
+    }
+    .btn {
+        width: 100% !important;
+        height: 38px;
+        margin: 0 !important;
     }
     .app-main-content {
         padding: 12px 16px;
@@ -1007,5 +1027,11 @@ body.dark-mode .report-law-badge {
     }
     .footer-search-bar {
         justify-content: space-between;
+    }
+    .footer-download-btn-wrapper {
+        width: 100%;
+    }
+    .footer-download-btn-wrapper .btn {
+        width: 100% !important;
     }
 }
