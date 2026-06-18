@@ -1164,18 +1164,35 @@ body.dark-mode .report-law-badge {
     }
 
     .top-control-panel {
-        padding: 14px 16px;
-        gap: 14px;
+        padding: 10px 14px;
+        gap: 8px;
     }
-    .selectors-row, .actions-row {
+    .selectors-row {
+        flex-direction: row !important;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+    .actions-row {
         flex-direction: column;
         align-items: stretch;
-        gap: 12px;
+        gap: 8px;
+        width: 100%;
     }
-    .selector-field, .keyword-field {
+    .selector-field {
+        flex: 1;
+        display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 6px;
+        gap: 4px;
+        width: auto;
+        min-width: 0;
+    }
+    .keyword-field {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
         width: 100%;
     }
     .field-label {
@@ -1184,7 +1201,8 @@ body.dark-mode .report-law-badge {
         text-align: left !important;
         padding-right: 0 !important;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
+        margin-bottom: 2px;
     }
     .select-wrapper, .form-select, .form-input {
         width: 100% !important;
@@ -1193,16 +1211,28 @@ body.dark-mode .report-law-badge {
     }
     .buttons-field {
         display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+        flex-direction: row !important;
+        align-items: center;
+        gap: 6px;
         width: 100%;
-        margin-top: 4px;
+        margin-top: 2px;
     }
     .btn {
-        width: 100% !important;
-        height: 38px;
+        flex: 1;
+        width: auto !important;
+        height: 34px !important;
+        font-size: 11px !important;
+        padding: 0 4px !important;
         margin: 0 !important;
+    }
+    #btnSearchOrdin {
+        flex: 1.2;
+    }
+    #btnSearchJeongyeol {
+        flex: 1.2;
+    }
+    #btnStop {
+        flex: 0.6;
     }
     .app-main-content {
         padding: 12px 16px;
