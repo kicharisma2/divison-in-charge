@@ -140,6 +140,12 @@ body {
     font-size: 16px;
     font-weight: 700;
     letter-spacing: -0.3px;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.header-title:hover {
+    opacity: 0.85;
 }
 
 .header-controls {
@@ -1018,8 +1024,145 @@ body.dark-mode .report-law-badge {
     color: #ffffff !important;
 }
 
+/* Modal Overlay (Glassmorphism backdrop) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal Content Box */
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    width: 90%;
+    max-width: 420px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: modalFadeIn 0.25s ease-out;
+    transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+@keyframes modalFadeIn {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.setting-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.setting-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.setting-input[readonly] {
+    background: var(--bg-app);
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.setting-input:focus:not([readonly]) {
+    border-color: var(--border-focus);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 6px;
+}
+
 /* Responsive adaptation for Mobile Screen */
 @media (max-width: 768px) {
+    .header-title {
+        font-size: 13.5px;
+        white-space: normal;
+        word-break: keep-all;
+        line-height: 1.3;
+        flex: 1;
+    }
+    
+    .app-header {
+        padding: 10px 16px;
+        height: auto;
+        min-height: 54px;
+    }
+
     .top-control-panel {
         padding: 14px 16px;
         gap: 14px;
@@ -1079,5 +1222,11 @@ body.dark-mode .report-law-badge {
     }
     .footer-download-btn-wrapper .btn {
         width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 12.5px;
     }
 }

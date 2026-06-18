@@ -79,7 +79,18 @@ const btnPrevMatch = document.getElementById("btnPrevMatch");
 const btnNextMatch = document.getElementById("btnNextMatch");
 const labelSearchStatus = document.getElementById("labelSearchStatus");
 const btnDownloadExcel = document.getElementById("btnDownloadExcel");
+
+// [초강력 기능] 개인 전용 Cloudflare Worker 프록시 기본값 지정 및 패스워드 보호
+const DEFAULT_PROXY_URL = "https://my-cors-proxy.kicharisma2.workers.dev/";
+
+const settingsModal = document.getElementById("settingsModal");
+const btnOpenSettings = document.getElementById("btnOpenSettings");
+const btnCloseSettings = document.getElementById("btnCloseSettings");
+const btnEditProxy = document.getElementById("btnEditProxy");
+const btnSaveProxy = document.getElementById("btnSaveProxy");
 const inputCustomProxy = document.getElementById("inputCustomProxy");
+const inputProxyPw = document.getElementById("inputProxyPw");
+const pwRow = document.getElementById("pwRow");
 
 let isSearching = false;
 let abortController = null;
@@ -88,11 +99,65 @@ let currentSearchMatches = [];
 let currentSearchIndex = -1;
 let currentActiveSearchBox = "log"; // 'log' or 'report'
 
-// Load and save custom proxy URL from localStorage
-if (inputCustomProxy) {
-    inputCustomProxy.value = localStorage.getItem("customProxyUrl") || "";
-    inputCustomProxy.addEventListener("input", () => {
-        localStorage.setItem("customProxyUrl", inputCustomProxy.value.trim());
+function getActiveProxy() {
+    return localStorage.getItem("customProxyUrl") || DEFAULT_PROXY_URL;
+}
+
+// Modal Event Bindings
+if (btnOpenSettings) {
+    btnOpenSettings.addEventListener("click", () => {
+        inputCustomProxy.value = localStorage.getItem("customProxyUrl") || DEFAULT_PROXY_URL;
+        inputCustomProxy.readOnly = true;
+        inputProxyPw.value = "";
+        pwRow.style.display = "none";
+        btnEditProxy.textContent = "변경하기";
+        btnEditProxy.style.display = "inline-flex";
+        btnSaveProxy.style.display = "none";
+        settingsModal.classList.add("active");
+    });
+}
+
+if (btnCloseSettings) {
+    btnCloseSettings.addEventListener("click", () => {
+        settingsModal.classList.remove("active");
+    });
+}
+
+if (btnEditProxy) {
+    btnEditProxy.addEventListener("click", () => {
+        if (pwRow.style.display === "none") {
+            pwRow.style.display = "flex";
+            inputProxyPw.value = "";
+            inputProxyPw.focus();
+            btnEditProxy.textContent = "인증하기";
+        } else {
+            const enteredPw = inputProxyPw.value;
+            if (enteredPw === "dododo") {
+                pwRow.style.display = "none";
+                inputCustomProxy.readOnly = false;
+                inputCustomProxy.focus();
+                btnEditProxy.style.display = "none";
+                btnSaveProxy.style.display = "inline-flex";
+            } else {
+                alert("비밀번호가 올바르지 않습니다. (비밀번호: dododo)");
+                inputProxyPw.value = "";
+                inputProxyPw.focus();
+            }
+        }
+    });
+}
+
+if (btnSaveProxy) {
+    btnSaveProxy.addEventListener("click", () => {
+        const newProxy = inputCustomProxy.value.trim();
+        if (newProxy) {
+            localStorage.setItem("customProxyUrl", newProxy);
+            alert("성공적으로 변경 및 저장되었습니다!");
+        } else {
+            localStorage.removeItem("customProxyUrl");
+            alert("기본 프록시 주소로 초기화되었습니다.");
+        }
+        settingsModal.classList.remove("active");
     });
 }
 
@@ -189,10 +254,10 @@ let lastSuccessfulProxyIdx = 0;
 // Fetch helper with proxy fallback, content validation, and timeout support
 async function fetchViaProxy(url, signal) {
     // [초강력 기능] 개인 전용 Cloudflare Worker 프록시 우선 사용 및 속도 극대화
-    const customProxy = localStorage.getItem("customProxyUrl") || "";
-    if (customProxy) {
+    const activeProxy = getActiveProxy();
+    if (activeProxy) {
         try {
-            const cleanProxy = customProxy.endsWith("/") ? customProxy : customProxy + "/";
+            const cleanProxy = activeProxy.endsWith("/") ? activeProxy : activeProxy + "/";
             const proxyUrl = `${cleanProxy}?url=${encodeURIComponent(url)}`;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -289,10 +354,10 @@ async function fetchViaProxy(url, signal) {
 // Fetch helper for binary content with OLE/ZIP magic bytes validation
 async function fetchViaProxyArrayBuffer(url, signal) {
     // [초강력 기능] 개인 전용 Cloudflare Worker 프록시 우선 사용 및 속도 극대화
-    const customProxy = localStorage.getItem("customProxyUrl") || "";
-    if (customProxy) {
+    const activeProxy = getActiveProxy();
+    if (activeProxy) {
         try {
-            const cleanProxy = customProxy.endsWith("/") ? customProxy : customProxy + "/";
+            const cleanProxy = activeProxy.endsWith("/") ? activeProxy : activeProxy + "/";
             const proxyUrl = `${cleanProxy}?url=${encodeURIComponent(url)}`;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 25000);

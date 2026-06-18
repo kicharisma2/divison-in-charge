@@ -11,7 +11,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS Styling -->
-    <link rel="stylesheet" href="style.css?v=1.6">
+    <link rel="stylesheet" href="style.css?v=3.0">
     <!-- JSZip for client-side ZIP/HWPX reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Pako for client-side Deflate/HWP decompression -->
@@ -23,12 +23,11 @@
     <div class="app-container">
         <!-- Header Banner (Navy theme matching Python title block) -->
         <header class="app-header">
-            <h1 class="header-title">공공기관 소관부서 및 사무분장 법령 통합 검증 엔진</h1>
+            <h1 class="header-title" style="cursor: pointer;" onclick="window.location.reload();">공공기관 소관부서 및 사무분장 법령 통합 검증 엔진</h1>
             <div class="header-controls">
-                <div class="proxy-setting-box" title="개인 Cloudflare Worker 프록시 주소를 입력하면 속도와 안정성이 극대화됩니다.">
-                    <span class="proxy-label"><i class="fa-solid fa-server"></i> 전용 프록시 URL:</span>
-                    <input type="text" id="inputCustomProxy" class="proxy-input" placeholder="https://...workers.dev/" autocomplete="off">
-                </div>
+                <button id="btnOpenSettings" class="theme-toggle-btn" title="전용 프록시 설정">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
                 <button id="themeToggleBtn" class="theme-toggle-btn" title="테마 변경">
                     <i class="fa-solid fa-moon"></i>
                 </button>
@@ -191,7 +190,31 @@
         </footer>
     </div>
 
+    <!-- Settings Modal (Glassmorphism Modal) -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fa-solid fa-gear"></i> 전용 프록시 설정</h3>
+                <button id="btnCloseSettings" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-row">
+                    <label class="setting-label">현재 프록시 주소:</label>
+                    <input type="text" id="inputCustomProxy" class="setting-input" placeholder="https://...workers.dev/" readonly autocomplete="off">
+                </div>
+                <div class="setting-row" id="pwRow" style="display: none;">
+                    <label class="setting-label">비밀번호 확인:</label>
+                    <input type="password" id="inputProxyPw" class="setting-input" placeholder="비밀번호 입력 (dododo)" autocomplete="off">
+                </div>
+                <div class="modal-actions">
+                    <button id="btnEditProxy" class="btn btn-secondary">변경하기</button>
+                    <button id="btnSaveProxy" class="btn btn-success" style="display: none;">저장하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Application Script -->
-    <script src="app.js?v=1.6"></script>
+    <script src="app.js?v=3.0"></script>
 </body>
 </html>
