@@ -79,6 +79,7 @@ const btnPrevMatch = document.getElementById("btnPrevMatch");
 const btnNextMatch = document.getElementById("btnNextMatch");
 const labelSearchStatus = document.getElementById("labelSearchStatus");
 const btnDownloadExcel = document.getElementById("btnDownloadExcel");
+const inputCustomProxy = document.getElementById("inputCustomProxy");
 
 let isSearching = false;
 let abortController = null;
@@ -86,6 +87,14 @@ let latestResults = null;
 let currentSearchMatches = [];
 let currentSearchIndex = -1;
 let currentActiveSearchBox = "log"; // 'log' or 'report'
+
+// Load and save custom proxy URL from localStorage
+if (inputCustomProxy) {
+    inputCustomProxy.value = localStorage.getItem("customProxyUrl") || "";
+    inputCustomProxy.addEventListener("input", () => {
+        localStorage.setItem("customProxyUrl", inputCustomProxy.value.trim());
+    });
+}
 
 // Theme Toggle
 themeToggleBtn.addEventListener("click", () => {
@@ -179,9 +188,39 @@ let lastSuccessfulProxyIdx = 0;
 
 // Fetch helper with proxy fallback, content validation, and timeout support
 async function fetchViaProxy(url, signal) {
+    // [초강력 기능] 개인 전용 Cloudflare Worker 프록시 우선 사용 및 속도 극대화
+    const customProxy = localStorage.getItem("customProxyUrl") || "";
+    if (customProxy) {
+        try {
+            const cleanProxy = customProxy.endsWith("/") ? customProxy : customProxy + "/";
+            const proxyUrl = `${cleanProxy}?url=${encodeURIComponent(url)}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            if (signal) signal.addEventListener("abort", () => controller.abort());
+            
+            const response = await fetch(proxyUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const arrayBuffer = await response.arrayBuffer();
+            let decoder = new TextDecoder("utf-8");
+            let text = decoder.decode(arrayBuffer);
+            const korMatches = text.match(/[가-힣]/g);
+            if (!korMatches || korMatches.length < 3) {
+                decoder = new TextDecoder("euc-kr");
+                text = decoder.decode(arrayBuffer);
+            }
+            return text;
+        } catch (e) {
+            console.warn("전용 프록시 호출 실패, 공용 프록시로 대체합니다.", e);
+            writeLog(`⚠️ [전용 프록시 호출 실패 -> 공용 프록시 대체]: ${e.message}`, "error");
+        }
+    }
+
     let lastError = null;
     const proxies = [
-        { name: "corsproxy", url: u => `https://corsproxy.io/?${u}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` }, // Fixed unencoded target URL parameter stripping
         { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
         { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` }
     ];
@@ -249,9 +288,30 @@ async function fetchViaProxy(url, signal) {
 
 // Fetch helper for binary content with OLE/ZIP magic bytes validation
 async function fetchViaProxyArrayBuffer(url, signal) {
+    // [초강력 기능] 개인 전용 Cloudflare Worker 프록시 우선 사용 및 속도 극대화
+    const customProxy = localStorage.getItem("customProxyUrl") || "";
+    if (customProxy) {
+        try {
+            const cleanProxy = customProxy.endsWith("/") ? customProxy : customProxy + "/";
+            const proxyUrl = `${cleanProxy}?url=${encodeURIComponent(url)}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
+            if (signal) signal.addEventListener("abort", () => controller.abort());
+            
+            const response = await fetch(proxyUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.arrayBuffer();
+        } catch (e) {
+            console.warn("전용 프록시 바이너리 호출 실패, 공용 프록시로 대체합니다.", e);
+            writeLog(`⚠️ [전용 프록시 다운로드 실패 -> 공용 프록시 대체]: ${e.message}`, "error");
+        }
+    }
+
     let lastError = null;
     const proxies = [
-        { name: "corsproxy", url: u => `https://corsproxy.io/?${u}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` }, // Fixed unencoded target URL parameter stripping
         { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
         { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` }
     ];

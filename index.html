@@ -11,7 +11,7 @@
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS Styling -->
-    <link rel="stylesheet" href="style.css?v=1.5">
+    <link rel="stylesheet" href="style.css?v=1.6">
     <!-- JSZip for client-side ZIP/HWPX reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Pako for client-side Deflate/HWP decompression -->
@@ -25,6 +25,10 @@
         <header class="app-header">
             <h1 class="header-title">공공기관 소관부서 및 사무분장 법령 통합 검증 엔진</h1>
             <div class="header-controls">
+                <div class="proxy-setting-box" title="개인 Cloudflare Worker 프록시 주소를 입력하면 속도와 안정성이 극대화됩니다.">
+                    <span class="proxy-label"><i class="fa-solid fa-server"></i> 전용 프록시 URL:</span>
+                    <input type="text" id="inputCustomProxy" class="proxy-input" placeholder="https://...workers.dev/" autocomplete="off">
+                </div>
                 <button id="themeToggleBtn" class="theme-toggle-btn" title="테마 변경">
                     <i class="fa-solid fa-moon"></i>
                 </button>
@@ -188,6 +192,6 @@
     </div>
 
     <!-- Application Script -->
-    <script src="app.js?v=1.5"></script>
+    <script src="app.js?v=1.6"></script>
 </body>
 </html>
