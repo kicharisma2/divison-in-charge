@@ -181,7 +181,7 @@ let lastSuccessfulProxyIdx = 0;
 async function fetchViaProxy(url, signal) {
     let lastError = null;
     const proxies = [
-        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${u}` },
         { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
         { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` }
     ];
@@ -248,7 +248,7 @@ async function fetchViaProxy(url, signal) {
 async function fetchViaProxyArrayBuffer(url, signal) {
     let lastError = null;
     const proxies = [
-        { name: "corsproxy", url: u => `https://corsproxy.io/?${encodeURIComponent(u)}` },
+        { name: "corsproxy", url: u => `https://corsproxy.io/?${u}` },
         { name: "allorigins-raw", url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
         { name: "allorigins-json", url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}` }
     ];
@@ -933,7 +933,7 @@ function setSearchingState(state) {
         btnSearchOrdin.innerHTML = '<i class="fa-solid fa-spinner fa-spin-custom"></i> 가동 중...';
         btnSearchJeongyeol.disabled = true;
     } else {
-        btnSearchOrdin.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> 분장사무 정밀 추적';
+        btnSearchOrdin.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> 분장사무 검색';
         btnSearchJeongyeol.disabled = false;
         
         if (latestResults && Object.keys(latestResults.summary).length > 0) {
