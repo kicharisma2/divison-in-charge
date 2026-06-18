@@ -139,7 +139,7 @@ if (btnEditProxy) {
                 btnEditProxy.style.display = "none";
                 btnSaveProxy.style.display = "inline-flex";
             } else {
-                alert("비밀번호가 올바르지 않습니다. (비밀번호: dododo)");
+                alert("비밀번호가 올바르지 않습니다.");
                 inputProxyPw.value = "";
                 inputProxyPw.focus();
             }
@@ -1915,7 +1915,7 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                     lawType = m.isOrg ? "★ 1순위 (기구 조직 조례/규칙)" : "📝 2순위 (일반 사무 규정)";
                 }
                 
-                writeLogTagged([["   ▶ 소관 부서 : ", "normal"], [m.dept, "dept"], [` (${lawType})`, "office"]]);
+                writeLogTagged([["   ▶ 소관 부서 : ", "normal"], [m.dept, "dept"]]);
                 writeLogTagged([["   ▶ 근거 법령 : ", "normal"], [m.lName, "law"]]);
                 
                 if (m.lines.length === 1) {
@@ -1990,7 +1990,6 @@ function renderReport(data, keyword) {
             deptRow.className = "report-dept-row";
             deptRow.innerHTML = `
                 <span class="report-dept-name">${m.dept}</span>
-                <span class="report-law-badge">${lawType}</span>
             `;
             matchCard.appendChild(deptRow);
             
