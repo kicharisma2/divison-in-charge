@@ -194,7 +194,7 @@ async function fetchViaProxy(url, signal) {
         const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout (fail fast)
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for list/detail requests
             
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
@@ -261,7 +261,7 @@ async function fetchViaProxyArrayBuffer(url, signal) {
         const proxyUrl = proxies[i].url(url);
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for binary downloads
+            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout for binary downloads
             
             if (signal) {
                 signal.addEventListener("abort", () => controller.abort());
@@ -896,6 +896,7 @@ async function querySearchList(target, query, signal) {
             if (page * display >= total) break;
         } catch (e) {
             console.error("XML 검색 리스트 요청 실패:", e);
+            writeLog(`⚠️ [법령 리스트 검색 실패]: ${e.message}`, "error");
             break;
         }
     }
@@ -1626,6 +1627,7 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                             }
                         } catch (eBin) {
                             console.warn("이진 파일 다운로드/파싱 실패:", item.binaryUrl, eBin);
+                            writeLog(`⚠️ [별표 파일 다운로드/분석 실패 -> ${item.bylName}]: ${eBin.message}`, "error");
                         }
                     }
                     
@@ -1644,6 +1646,7 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                             }
                         } catch (eHtml) {
                             console.error("별표 HTML 뷰어 스캔 실패:", item.htmlUrl, eHtml);
+                            writeLog(`⚠️ [별표 HTML 스캔 실패 -> ${item.bylName}]: ${eHtml.message}`, "error");
                         }
                     }
                     
@@ -1674,6 +1677,7 @@ async function executeSearchLogic(keyword, mainRegion, subRegion, mode, signal) 
                 }
             } catch (e) {
                 console.error(`${lName} 파싱 중 오류:`, e);
+                writeLog(`⚠️ [법령 상세 파싱 오류 -> ${lName}]: ${e.message}`, "error");
             }
         }
     }
